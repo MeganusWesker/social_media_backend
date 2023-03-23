@@ -35,6 +35,10 @@ app.use('/api/v1',posts);
 app.use('/api/v1',users);
 app.use('/api/v1',chats);
 
+app.get('/',(req,res)=>{
+    res.send('working');
+})
+
 
 
 
