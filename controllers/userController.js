@@ -451,11 +451,25 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 
 exports.getUserProfile = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(req.params.id).populate("posts followers following");
-
-
+   
     if (!user) {
         return next(new ErrorHandler("can't find user", 400));
     }
+
+
+    let isFollowed=false;
+   
+
+    user.followers.forEach((item)=>{
+        if(item._id.toString()===req.user.id){
+            isFollowed=true;
+        }
+    })
+
+
+    user.isFollowed=isFollowed;
+
+    console.log(user.isFollowed);
 
     res.status(200).json({
         success: true,
