@@ -463,14 +463,7 @@ exports.getUserProfile = catchAsyncErrors(async (req, res, next) => {
     })
 });
 
-exports.getAllUser = catchAsyncErrors(async (req, res, next) => {
-    const users = await User.find();
 
-    res.status(200).json({
-        success: true,
-        users
-    })
-});
 
 exports.getMyPosts = catchAsyncErrors(async (req, res, next) => {
 
@@ -507,4 +500,30 @@ exports.getUserPost = catchAsyncErrors(async (req, res, next) => {
         success: true,
         posts,
     });
-})
+});
+
+exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
+    const keyword=req.query.keyword || "";
+
+    const users=await User.find({
+        userName:{
+            $regex:keyword,
+            $options:"i",
+        },
+
+        _id:{
+            $ne:req.user.id,
+        },
+
+       
+    });
+
+    res.status(200).json({
+        success: true,
+        users,
+    });
+
+
+});
+
+

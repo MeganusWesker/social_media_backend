@@ -11,7 +11,7 @@ const {
         deleteMyProfile,
         getProfile,
         getUserProfile,
-        getAllUser,
+        getAllUsers,
         getMyPosts,
         forgotPassword,
         resetPassword,
@@ -46,7 +46,7 @@ router.route('/me').get(isAuthenticatedUser,getProfile);
 
 router.route('/profile/users/:id').get(isAuthenticatedUser,getUserProfile); 
 
-router.route('/users').get(isAuthenticatedUser,getAllUser); 
+router.route('/users').get(isAuthenticatedUser,getAllUsers); 
 
 router.route("/my/posts").get(isAuthenticatedUser, getMyPosts);
 
