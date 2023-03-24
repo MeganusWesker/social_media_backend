@@ -440,12 +440,19 @@ exports.deleteMyProfile = catchAsyncErrors(async (req, res, next) => {
 
 exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 
-    const user = await User.findById(req.user.id).populate("posts followers following")
+    const user = await User.findById(req.user.id).populate("posts followers following");
+
+    let totalLikes=0;
+
+    user.posts.forEach((item)=>{
+        totalLikes+=item.likes.length;
+    });
 
 
     res.status(200).json({
         success: true,
-        user
+        user,
+        totalLikes,
     })
 });
 
@@ -464,16 +471,21 @@ exports.getUserProfile = catchAsyncErrors(async (req, res, next) => {
         if(item._id.toString()===req.user.id){
             isFollowed=true;
         }
+    });
+
+    let searchedUserTotalLikes=0;
+
+    user.posts.forEach((item)=>{
+        searchedUserTotalLikes+=item.likes.length;
     })
 
 
-    user.isFollowed=isFollowed;
-
-    console.log(user.isFollowed);
 
     res.status(200).json({
         success: true,
-        user
+        user,
+        isFollowed,
+        searchedUserTotalLikes,
     })
 });
 
