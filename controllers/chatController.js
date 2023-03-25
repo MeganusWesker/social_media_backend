@@ -51,7 +51,7 @@ exports.createMessage=catchAsyncErrors(async(req,res,next)=>{
 
 exports.getAllMessagesOfParticularConversation=catchAsyncErrors(async(req,res,next)=>{
 
-    const {conversationId}= req.body;
+    const {conversationId}= req.query;
 
   const messages = await Message.find({conversationId});
 
