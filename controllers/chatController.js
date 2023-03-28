@@ -3,7 +3,8 @@ const catchAsyncErrors = require('../middlewares/catchAsyncError');
 const ErrorHandler = require("../utils/errorHandler");
 const Conversation = require("../models/conversationModel");
 const Message = require("../models/messageModel");
-
+const { getDataUri } = require("../utils/dataUri");
+const cloudinary = require("cloudinary");
 
 exports.createConversation=catchAsyncErrors(async(req,res,next)=>{
 
@@ -58,6 +59,42 @@ exports.getAllMessagesOfParticularConversation=catchAsyncErrors(async(req,res,ne
     res.status(201).json({
         success:true,
         messages,
+    });
+
+});
+
+exports.createImageMessage=catchAsyncErrors(async(req,res,next)=>{
+
+    const {conversationId,isImageMessage}= req.body;
+
+    const file = req.file;
+
+    if (!file) {
+        return next(new ErrorHandler("please enter image ", 400));
+    }
+
+    const fileUrl = getDataUri(file);
+
+    myCloud = await cloudinary.v2.uploader.upload(fileUrl.content, {
+        folder: "imageMessages",
+    });
+
+  
+
+  const message=  await Message.create({
+        conversationId,
+        isImageMessage,
+        senderId:req.user.id,
+        image:{
+            public_id:myCloud.public_id,
+            url:myCloud.secure_url
+        }
+    });
+
+    res.status(201).json({
+        success:true,
+        message:'message sent',
+        message,
     });
 
 });

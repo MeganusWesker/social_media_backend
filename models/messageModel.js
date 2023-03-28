@@ -14,10 +14,20 @@ const messageSchema = new mongoose.Schema({
 
     message:{
         type:String,
-        required:[true,'message should not be empty'],
     },
 
+    isImageMessage:Boolean,
 
+    image:{
+        public_id:{
+            type:String,
+           
+        },
+        url:{
+            type:String,
+        }
+    },
+    
     createdAt: {
         type: Date,
         default: Date.now
