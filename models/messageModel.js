@@ -17,6 +17,10 @@ const messageSchema = new mongoose.Schema({
     },
 
     isImageMessage:Boolean,
+    isBackendMessage:{
+        type:Boolean,
+        default:true,
+    },
 
     image:{
         public_id:{
