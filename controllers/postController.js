@@ -45,6 +45,51 @@ exports.createPost = catchAsyncErrors(async (req,res,next)=>{
 });
 
 
+exports.createVideoPost = catchAsyncErrors(async (req,res,next)=>{
+  
+  const file = req.file;
+ 
+  if(!file){
+   return next(new ErrorHandler("please add post ",400));
+ }
+ 
+  const fileUrl=getDataUri(file);
+  
+   
+   const myCloud =  await cloudinary.v2.uploader.upload(fileUrl.content,{
+     folder:"videoPosts",
+     resource_type:'video',
+ })
+ 
+ 
+     const postData = {
+         caption:req.body.caption,
+         video:{
+             public_id:myCloud.public_id,
+             url:myCloud.secure_url
+         },
+         isVideoPost:true,
+         owner:req.user.id
+     }
+ 
+    const post = await Post.create(postData);
+    const user = await User.findById(req.user.id);
+    user.posts.push(post._id);
+ 
+    await user.save();
+    
+ 
+    res.status(201).json({
+        success:true,
+        message:"post has been created",
+        post
+    })
+ });
+
+
+
+
+
 exports.deletePost = catchAsyncErrors(async (req,res,next)=>{
     const post= await Post.findById(req.params.id);
 

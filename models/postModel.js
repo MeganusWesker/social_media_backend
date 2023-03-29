@@ -2,6 +2,13 @@ const mongoose = require('mongoose');
 
 const postSchema = new mongoose.Schema({
     caption: String,
+    isVideoPost:Boolean,
+
+    video:{
+        public_id: String,
+        url: String,
+    },
+
     image: {
         public_id: String,
         url: String,
