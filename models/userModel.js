@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema({
         type:String,
     },
 
+    newMessage:{
+        type:Boolean,
+        default:false,
+    },
+
     userName:{
         type:String,
         required:[true,'please enter your email'],

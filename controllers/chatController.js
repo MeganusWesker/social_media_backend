@@ -34,7 +34,13 @@ exports.getMyAllConversations=catchAsyncErrors(async(req,res,next)=>{
 
 exports.createMessage=catchAsyncErrors(async(req,res,next)=>{
 
-    const {conversationId,textMessage}= req.body;
+    const {conversationId,textMessage,recieverId}= req.body;
+
+    const receivingUser=await User.findById(recieverId);
+
+    receivingUser.newMessage=true,
+
+    await receivingUser.save();
 
     await Message.create({
         conversationId,
@@ -65,7 +71,12 @@ exports.getAllMessagesOfParticularConversation=catchAsyncErrors(async(req,res,ne
 
 exports.createImageMessage=catchAsyncErrors(async(req,res,next)=>{
 
-    const {conversationId,isImageMessage}= req.body;
+    const {conversationId,isImageMessage,recieverId}= req.body;
+
+    const receivingUser=await User.findById(recieverId);
+
+
+
 
     const file = req.file;
 
@@ -79,7 +90,7 @@ exports.createImageMessage=catchAsyncErrors(async(req,res,next)=>{
         folder: "imageMessages",
     });
 
-  
+
 
   const message=  await Message.create({
         conversationId,
@@ -90,6 +101,10 @@ exports.createImageMessage=catchAsyncErrors(async(req,res,next)=>{
             url:myCloud.secure_url
         }
     });
+
+    receivingUser.newMessage=true,
+
+    await receivingUser.save();
 
     res.status(201).json({
         success:true,
