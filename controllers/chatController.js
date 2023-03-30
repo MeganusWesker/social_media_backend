@@ -113,3 +113,18 @@ exports.createImageMessage=catchAsyncErrors(async(req,res,next)=>{
     });
 
 });
+
+exports.toggleNewMessageField=catchAsyncErrors(async(req,res,next)=>{
+
+   const user=await User.findById(req.user.id);
+
+   user.newMessage=false,
+
+   await user.save();
+
+    res.status(201).json({
+        success:true,
+        userNewMessage:user.newMessage,
+    });
+
+});
