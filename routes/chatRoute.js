@@ -4,7 +4,8 @@ const { createConversation,
         createMessage,
         getAllMessagesOfParticularConversation,
         createImageMessage,
-        toggleNewMessageField 
+        toggleNewMessageField,
+        toggleMessageInConversation 
     } = require('../controllers/chatController');
 const router = express.Router();
 
@@ -21,6 +22,8 @@ router.route("/imageMessage/new").post(singleUpload,isAuthenticatedUser, createI
 router.route("/conversation/all").get(isAuthenticatedUser, getMyAllConversations);
 
 router.route("/toggle/newMessage").get(isAuthenticatedUser, toggleNewMessageField);
+
+router.route("/toggle/conversation/messages/:conversationId").put(isAuthenticatedUser,toggleMessageInConversation);
 
 router.route("/message/all").get(isAuthenticatedUser, getAllMessagesOfParticularConversation);
 

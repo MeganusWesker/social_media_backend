@@ -137,3 +137,24 @@ exports.toggleNewMessageField=catchAsyncErrors(async(req,res,next)=>{
     });
 
 });
+
+exports.toggleMessageInConversation=catchAsyncErrors(async(req,res,next)=>{
+
+    const {conversationId}= req.params;
+
+    const conversation=await Conversation.findById(conversationId);
+
+
+   conversation.messages.forEach(async(item)=>{
+        const message=  await Message.findById(item.toString());
+        message.isNewMessage=false;
+        message.save();
+   });
+
+   await conversation.save();
+
+     res.status(201).json({
+         success:true,
+     });
+ 
+ });
