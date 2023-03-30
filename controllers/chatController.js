@@ -23,7 +23,7 @@ exports.getMyAllConversations=catchAsyncErrors(async(req,res,next)=>{
 
   const conversations=await Conversation.find({
     members:{$in:req.user.id}
-  }).populate('members');
+  }).populate('members messages');
 
 
     res.status(201).json({
@@ -37,16 +37,21 @@ exports.createMessage=catchAsyncErrors(async(req,res,next)=>{
     const {conversationId,textMessage,recieverId}= req.body;
 
     const receivingUser=await User.findById(recieverId);
+    const conversation=await Conversation.findById(conversationId);
 
     receivingUser.newMessage=true,
 
     await receivingUser.save();
 
-    await Message.create({
+  const message=  await Message.create({
         conversationId,
         message:textMessage,
         senderId:req.user.id,
     });
+
+    conversation.messages.push(message._id);
+
+    await conversation.save();
 
     res.status(201).json({
         success:true,
@@ -75,7 +80,7 @@ exports.createImageMessage=catchAsyncErrors(async(req,res,next)=>{
 
     const receivingUser=await User.findById(recieverId);
 
-
+    const conversation=await Conversation.findById(conversationId);
 
 
     const file = req.file;
@@ -105,6 +110,10 @@ exports.createImageMessage=catchAsyncErrors(async(req,res,next)=>{
     receivingUser.newMessage=true,
 
     await receivingUser.save();
+
+    conversation.messages.push(message._id);
+
+    await conversation.save();
 
     res.status(201).json({
         success:true,
