@@ -124,11 +124,13 @@ exports.deletePost = catchAsyncErrors(async (req,res,next)=>{
 exports.likeAndUnlikePost = catchAsyncErrors(async (req,res,next)=>{
    const post = await Post.findById(req.params.id);
 
+
    if(!post){
     return next(new ErrorHandler("can't find post",404));
    }
-    
 
+   const user = await User.findById(post.owner);
+    
    const alreadyLIked =post.likes.includes(req.user.id);
 
 
@@ -144,6 +146,18 @@ exports.likeAndUnlikePost = catchAsyncErrors(async (req,res,next)=>{
     } 
     else{
         post.likes.push(req.user.id);
+
+        const notification=await Notification.create({
+          user:{
+              avatar:req.avatar.url,
+              _id:req.user.id,
+              userName:req.user.userName
+          },
+          notificationMessage:"liked you're post "
+      });
+
+      user.notifications.push(notification._id);
+
         await post.save();
 
         res.status(200).json({

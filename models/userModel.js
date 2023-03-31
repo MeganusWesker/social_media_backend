@@ -70,6 +70,13 @@ const userSchema = new mongoose.Schema({
          }
     ],
 
+    notifications:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Notification",
+         }
+    ],
+
     verified:{
         type:Boolean,
         default:false

@@ -16,7 +16,8 @@ const {
         forgotPassword,
         resetPassword,
         getUserPost,
-        verify
+        verify,
+        getMYAllNotifications
 } =require('../controllers/userController');
 
 const multipleUpload=require('../middlewares/multipleUpload');
@@ -43,6 +44,8 @@ router.route('/update/profile').put(singleUpload,isAuthenticatedUser,updateProfi
 router.route('/delete/me').delete(isAuthenticatedUser,deleteMyProfile);
 
 router.route('/me').get(isAuthenticatedUser,getProfile);
+
+router.route('/my/notifications').get(isAuthenticatedUser,getMYAllNotifications);
 
 router.route('/profile/users/:id').get(isAuthenticatedUser,getUserProfile); 
 

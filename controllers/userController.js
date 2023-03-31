@@ -7,6 +7,7 @@ const catchAsyncErrors = require('../middlewares/catchAsyncError');
 const Post = require('../models/postModel');
 const cloudinary = require("cloudinary");
 const { getDataUri } = require('../utils/dataUri');
+const Notification = require('../models/notificatinModel');
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
 
@@ -178,6 +179,17 @@ exports.followUserUnfollowUser = catchAsyncErrors(async (req, res, next) => {
     else {
         user.followers.push(req.user.id);
         currentUser.following.push(req.params.id);
+
+        const notification=await Notification.create({
+            user:{
+                avatar:currentUser.avatar.url,
+                _id:req.user.id,
+                userName:req.user.userName
+            },
+            notificationMessage:'followed you'
+        });
+
+        user.notifications.push(notification._id);
 
         await user.save();
         await currentUser.save();
@@ -440,7 +452,9 @@ exports.deleteMyProfile = catchAsyncErrors(async (req, res, next) => {
 
 exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 
-    const user = await User.findById(req.user.id).populate("posts followers following");
+    const user = await User.findById(req.user.id).populate("posts followers following notifications");
+
+
 
     let totalLikes=0;
 
@@ -457,7 +471,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getUserProfile = catchAsyncErrors(async (req, res, next) => {
-    const user = await User.findById(req.params.id).populate("posts followers following");
+    const user = await User.findById(req.params.id).populate("posts followers following notifications");
    
     if (!user) {
         return next(new ErrorHandler("can't find user", 400));
@@ -549,6 +563,19 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
         users,
     });
 
+
+});
+
+
+exports.getMYAllNotifications = catchAsyncErrors(async (req, res, next) => {
+ 
+    const user = await User.findById(req.user.id).populate('notifications');
+
+
+  res.status(200).json({
+        success: true,
+        myNotifications:user.notifications,
+    });
 
 });
 
