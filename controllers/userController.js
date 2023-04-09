@@ -470,7 +470,7 @@ exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getUserProfile = catchAsyncErrors(async (req, res, next) => {
-    const user = await User.findById(req.params.id).populate("posts followers following notifications");
+    const user = await User.findById(req.params.id).populate("posts followers following notifications likedPosts");
    
     if (!user) {
         return next(new ErrorHandler("can't find user", 400));
