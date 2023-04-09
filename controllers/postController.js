@@ -336,3 +336,17 @@ exports.deleteComment = catchAsyncErrors(async (req, res, next) => {
     });
   }
 });
+
+
+exports.getSinglePost = catchAsyncErrors(async (req, res, next) => {
+
+  const {postId}=req.params;
+
+ 
+  const post = await Post.findById(postId).populate("owner likes comments.user");
+
+  res.status(200).json({
+    success: true,
+    post,
+  });
+});

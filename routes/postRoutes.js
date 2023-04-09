@@ -8,7 +8,8 @@ const { createPost,
     commentOnPost,
     deleteComment,
     createVideoPost,
-    saveOrUnsavePost } = require('../controllers/postController');
+    saveOrUnsavePost,
+    getSinglePost } = require('../controllers/postController');
 const { isAuthenticatedUser } = require('../middlewares/userAuth');
 
 const singleUpload = require('../middlewares/singleUpload');
@@ -21,6 +22,8 @@ router.route("/video/new").post(singleUpload, isAuthenticatedUser, createVideoPo
 router.route('/post/:id').get(isAuthenticatedUser, likeAndUnlikePost).delete(isAuthenticatedUser, deletePost).put(isAuthenticatedUser, updateCaption);
 
 router.route('/posts').get(isAuthenticatedUser, getPostOfFollowings);
+
+router.route('/get/post/:postId').get(isAuthenticatedUser, getSinglePost);
 
 router.route('/post/comment/:id').put(isAuthenticatedUser, commentOnPost).delete(isAuthenticatedUser, deleteComment);
 
