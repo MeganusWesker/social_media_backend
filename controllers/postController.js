@@ -160,6 +160,7 @@ exports.likeAndUnlikePost = catchAsyncErrors(async (req, res, next) => {
     user.notifications.push(notification._id);
 
     await post.save();
+    await user.save();
 
     res.status(200).json({
       success: true,
