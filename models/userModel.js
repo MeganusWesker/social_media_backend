@@ -56,6 +56,13 @@ const userSchema = new mongoose.Schema({
         }
     ],
 
+    likedPosts:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Post",
+         }
+    ],
+
     followers:[
         {
             type:mongoose.Schema.Types.ObjectId,

@@ -452,8 +452,7 @@ exports.deleteMyProfile = catchAsyncErrors(async (req, res, next) => {
 
 exports.getProfile = catchAsyncErrors(async (req, res, next) => {
 
-    const user = await User.findById(req.user.id).populate("posts followers following notifications");
-
+    const user = await User.findById(req.user.id).populate("posts followers following notifications likedPosts");
 
 
     let totalLikes=0;

@@ -4,7 +4,7 @@ const catchAsyncErrors = require('../middlewares/catchAsyncError');
 const ErrorHandler = require("../utils/errorHandler");
 const cloudinary = require("cloudinary");
 const { getDataUri } = require("../utils/dataUri");
-
+const Notification = require('../models/notificatinModel');
 
 exports.createPost = catchAsyncErrors(async (req,res,next)=>{
   
@@ -169,6 +169,48 @@ exports.likeAndUnlikePost = catchAsyncErrors(async (req,res,next)=>{
 
 
 });
+
+exports.saveOrUnsavePost = catchAsyncErrors(async (req,res,next)=>{
+  const post = await Post.findById(req.params.id);
+
+
+  if(!post){
+   return next(new ErrorHandler("can't find post",404));
+  }
+
+  const user = await User.findById(post.owner);
+  const currentUser = await User.findById(req.user.id);
+
+  if(user._id.toString()===currentUser._id.toString()){
+    return next(new ErrorHandler("you can't save you're own post ",403));
+  }
+   
+  const alreadySaved =currentUser.likedPosts.includes(post._id);
+
+
+  if(alreadySaved){
+      const index = currentUser.likedPosts.indexOf(post._id);
+      currentUser.likedPosts.splice(index,1);
+      await currentUser.save();
+
+      res.status(200).json({
+          success:true,
+          message:"post unsaved succesfully"
+      });
+   } 
+   else{
+    currentUser.likedPosts.push(post._id);
+
+    await currentUser.save();
+
+       res.status(200).json({
+           success:true,
+           message:"post saved succesfully"
+       });
+     
+  }
+});
+
 
 exports.getPostOfFollowings = catchAsyncErrors(async (req,res,next)=>{
    const user = await User.findById(req.user.id);
