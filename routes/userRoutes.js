@@ -57,7 +57,7 @@ router.route("/my/posts").get(isAuthenticatedUser, getMyPosts);
 router.route('/forgot/password').post(forgotPassword);
 
 //resetPassword
-router.route('/password/reset/:token').put(resetPassword);
+router.route('/reset/password').put(resetPassword);
 
 router.route('/userposts/:id').get(isAuthenticatedUser,getUserPost);
 
