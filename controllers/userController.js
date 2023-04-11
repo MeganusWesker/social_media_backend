@@ -573,7 +573,7 @@ exports.getMYAllNotifications = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
         success: true,
-        myNotifications:user.notifications,
+        myNotifications:user.notifications.reverse(),
     });
 
 });
