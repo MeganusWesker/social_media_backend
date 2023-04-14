@@ -130,7 +130,7 @@ exports.likeAndUnlikePost = catchAsyncErrors(async (req, res, next) => {
   }
 
   const user = await User.findById(post.owner);
-  const currentUser=await User.findById(req.user.id);
+  const currentUser = await User.findById(req.user.id);
 
   const alreadyLIked = post.likes.includes(currentUser._id);
 
@@ -225,7 +225,7 @@ exports.getPostOfFollowings = catchAsyncErrors(async (req, res, next) => {
     owner: {
       $in: user.following
     }
-  }).populate("owner likes comments.user")
+  }).populate("owner likes comments.user comments.likes comments.replies.commentBy comments.replies.repliedTo comments.replies.likes")
 
   res.status(200).json({
     success: true,
@@ -256,94 +256,437 @@ exports.updateCaption = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.commentOnPost = catchAsyncErrors(async (req, res, next) => {
-  const post = await Post.findById(req.params.id);
+  const post = await Post.findById(req.params.postId);
 
   if (!post) {
     return next(new ErrorHandler("can't find post ", 404));
   }
 
-  let commentIndex = -1;
+  const userThatOwnThePost = await User.findById(post.owner);
+  const currentLoggedInUser = await User.findById(req.user.id);
 
-  // Checking if comment already exists
 
-  post.comments.forEach((item, index) => {
-    if (item.user.toString() === req.user.id.toString()) {
-      commentIndex = index;
-    }
+  post.comments.push({
+    user: currentLoggedInUser._id,
+    comment: req.body.comment
   });
 
-  if (commentIndex !== -1) {
-    post.comments[commentIndex].comment = req.body.comment;
+  await post.save();
 
-    await post.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Comment Updated",
-    });
-  } else {
-    post.comments.push({
-      user: req.user.id,
-      comment: req.body.comment,
+  if (currentLoggedInUser._id.toString() !== userThatOwnThePost._id.toString()) {
+    const notification = await Notification.create({
+      user: {
+        avatar: currentLoggedInUser.avatar.url,
+        _id: currentLoggedInUser._id,
+        userName: currentLoggedInUser.userName
+      },
+      notificationMessage: "commented On you're Post"
     });
 
-    await post.save();
-    return res.status(200).json({
-      success: true,
-      message: "Comment added",
-    });
+    userThatOwnThePost.notifications.push(notification._id);
+
+    await userThatOwnThePost.save();
   }
+
+
+
+  return res.status(200).json({
+    success: true,
+    message: "Comment added",
+  });
+
 });
 
-exports.deleteComment = catchAsyncErrors(async (req, res, next) => {
-  const post = await Post.findById(req.params.id);
+exports.likeCommentOnPost = catchAsyncErrors(async (req, res, next) => {
+  const post = await Post.findById(req.params.postId);
+
 
   if (!post) {
     return next(new ErrorHandler("can't find post ", 404));
   }
 
-  // Checking If owner wants to delete
+  const userThatOwnThePost = await User.findById(post.owner);
+  const currentLoggedInUser = await User.findById(req.user.id);
 
-  if (post.owner.toString() === req.user._id.toString()) {
-    if (req.body.commentId === undefined) {
-      return next(new ErrorHandler("Comment Id is required", 404));
+  let likeOrUnlikeChecker = true;
+
+
+  for (let i = 0; i < post.comments.length; i++) {
+    if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
+      const alreadyLIked = post.comments[i].likes.includes(currentLoggedInUser._id);
+
+      if (!alreadyLIked) {
+        post.comments[i].likes.push(currentLoggedInUser._id);
+      } else {
+        post.comments[i].likes = post.comments[i].likes.filter((item) => item.toString() !== currentLoggedInUser._id.toString());
+        likeOrUnlikeChecker = false;
+      }
+
     }
-
-    post.comments.forEach((item, index) => {
-      if (item._id.toString() === req.body.commentId.toString()) {
-        return post.comments.splice(index, 1);
-      }
-    });
-
-    await post.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Selected Comment has deleted",
-    });
-  } else {
-    post.comments.forEach((item, index) => {
-      if (item.user.toString() === req.user._id.toString()) {
-        return post.comments.splice(index, 1);
-      }
-    });
-
-    await post.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Your Comment has deleted",
-    });
   }
+
+  await post.save();
+
+
+  if (likeOrUnlikeChecker) {
+    if (currentLoggedInUser._id.toString() !== userThatOwnThePost._id.toString()) {
+      const notification = await Notification.create({
+        user: {
+          avatar: currentLoggedInUser.avatar.url,
+          _id: currentLoggedInUser._id,
+          userName: currentLoggedInUser.userName
+        },
+        notificationMessage: "liked you're comment"
+      });
+
+      userThatOwnThePost.notifications.push(notification._id);
+
+      await userThatOwnThePost.save();
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: likeOrUnlikeChecker ? "comment liked successfully" : "comment unlike successfully",
+  });
+
+});
+
+
+exports.updateCommentOnPost = catchAsyncErrors(async (req, res, next) => {
+  const post = await Post.findById(req.params.postId);
+
+
+  if (!post) {
+    return next(new ErrorHandler("can't find post ", 404));
+  }
+
+  const currentLoggedInUser = await User.findById(req.user.id);
+
+
+  for (let i = 0; i < post.comments.length; i++) {
+    if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
+
+
+      if (currentLoggedInUser._id.toString() !== post.comments[i].user.toString()) {
+
+        return next(new ErrorHandler("you only can edit you're on comment ", 403));
+      } else {
+        post.comments[i].comment = req.body.comment;
+      }
+
+    }
+  }
+
+  await post.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "comment edited successfully",
+  });
+
+});
+
+exports.deleteCommentOnPost = catchAsyncErrors(async (req, res, next) => {
+  const post = await Post.findById(req.params.postId);
+
+
+  if (!post) {
+    return next(new ErrorHandler("can't find post ", 404));
+  }
+
+  const userThatOwnThePost = await User.findById(post.owner);
+  const currentLoggedInUser = await User.findById(req.user.id);
+
+  const isPostOwner = userThatOwnThePost._id.toString() === currentLoggedInUser._id.toString();
+
+  for (let i = 0; i < post.comments.length; i++) {
+    if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
+
+      
+      if (currentLoggedInUser._id.toString() !== post.comments[i].user.toString() || isPostOwner) {
+
+        return next(new ErrorHandler("you only can delete you're on comment ", 403));
+      } else {
+        post.comments = post.comments.filter((item) => item._id.toString() !== req.params.commentId.toString());
+      }
+
+    }
+  }
+
+  await post.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "comment deleted successfully",
+  });
+
+});
+
+exports.replyToComment = catchAsyncErrors(async (req, res, next) => {
+
+
+  const post = await Post.findById(req.params.postId);
+
+  if (!post) {
+    return next(new ErrorHandler("can't find post ", 404));
+  }
+
+
+  const currentLoggedInUser = await User.findById(req.user.id);
+  let userWhoCommented;
+
+  for (let i = 0; i < post.comments.length; i++) {
+    if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
+      userWhoCommented = await User.findById(post.comments[i].user);
+      post.comments[i].replies.push({
+        commentBy: currentLoggedInUser._id,
+        repliedTo: post.comments[i].user,
+        comment: req.body.comment
+      })
+
+    }
+  }
+
+  await post.save();
+
+  if (currentLoggedInUser._id.toString() !== userWhoCommented._id.toString()) {
+    const notification = await Notification.create({
+      user: {
+        avatar: currentLoggedInUser.avatar.url,
+        _id: currentLoggedInUser._id,
+        userName: currentLoggedInUser.userName
+      },
+      notificationMessage: "mentioned you in a comment"
+    });
+
+    userWhoCommented.notifications.push(notification._id);
+
+    await userWhoCommented.save();
+  }
+
+
+
+  return res.status(200).json({
+    success: true,
+    message: "Comment added",
+  });
+
+});
+
+
+exports.likeReply = catchAsyncErrors(async (req, res, next) => {
+  const post = await Post.findById(req.params.postId);
+
+
+  if (!post) {
+    return next(new ErrorHandler("can't find post ", 404));
+  }
+
+
+  const currentLoggedInUser = await User.findById(req.user.id);
+  let userWhoCommented;
+
+  let likeOrUnlikeChecker = true;
+
+
+  for (let i = 0; i < post.comments.length; i++) {
+    if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
+
+      for (let j = 0; j < post.comments[i].replies.length; j++) {
+        if (req.params.replyId.toString() === post.comments[i].replies[j]._id.toString()) {
+
+          userWhoCommented = await User.findById(post.comments[i].replies[j].commentBy);
+
+          const alreadyLIked = post.comments[i].replies[j].likes.includes(currentLoggedInUser._id);
+
+          if (!alreadyLIked) {
+            post.comments[i].replies[j].likes.push(currentLoggedInUser._id);
+          } else {
+            post.comments[i].replies[j].likes = post.comments[i].replies[j].likes.filter((item) => item.toString() !== currentLoggedInUser._id.toString());
+            likeOrUnlikeChecker = false;
+          }
+
+        }
+      }
+
+    }
+  }
+
+  await post.save();
+
+  if (likeOrUnlikeChecker) {
+    if (currentLoggedInUser._id.toString() !== userWhoCommented._id.toString()) {
+      const notification = await Notification.create({
+        user: {
+          avatar: currentLoggedInUser.avatar.url,
+          _id: currentLoggedInUser._id,
+          userName: currentLoggedInUser.userName
+        },
+        notificationMessage: "liked you're comment"
+      });
+
+      userWhoCommented.notifications.push(notification._id);
+
+      await userWhoCommented.save();
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: likeOrUnlikeChecker ? "comment liked successfully" : "comment unlike successfully",
+  });
+
+});
+
+exports.editReplyOnPost = catchAsyncErrors(async (req, res, next) => {
+  const post = await Post.findById(req.params.postId);
+
+
+  if (!post) {
+    return next(new ErrorHandler("can't find post ", 404));
+  }
+
+  const currentLoggedInUser = await User.findById(req.user.id);
+
+
+  for (let i = 0; i < post.comments.length; i++) {
+    if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
+
+      for (let j = 0; j < post.comments[i].replies.length; j++) {
+        if (req.params.replyId.toString() === post.comments[i].replies[j]._id.toString()) {
+
+
+          if (currentLoggedInUser._id.toString() !== post.comments[i].replies[j].commentBy.toString()) {
+
+            return next(new ErrorHandler("you only can edit you're on comment ", 403));
+          } else {
+            post.comments[i].replies[j].comment = req.body.comment;
+          }
+
+        }
+      }
+    }
+  }
+
+  await post.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "comment edited successfully",
+  });
+
+});
+
+exports.deleteReplyOnPost = catchAsyncErrors(async (req, res, next) => {
+  const post = await Post.findById(req.params.postId);
+
+
+  if (!post) {
+    return next(new ErrorHandler("can't find post ", 404));
+  }
+
+  const userThatOwnThePost = await User.findById(post.owner);
+  const currentLoggedInUser = await User.findById(req.user.id);
+
+  const isPostOwner = userThatOwnThePost._id.toString() === currentLoggedInUser._id.toString();
+
+  for (let i = 0; i < post.comments.length; i++) {
+    if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
+
+      const commentOnwer = post.comments[i].user.toString() === currentLoggedInUser._id.toString();
+
+      for (let j = 0; j < post.comments[i].replies.length; j++) {
+
+        if (req.params.replyId.toString() === post.comments[i].replies[j]._id.toString()) {
+
+            if (currentLoggedInUser._id.toString() === post.comments[i].replies[j].commentBy.toString() || commentOnwer || isPostOwner)  {
+              post.comments[i].replies = post.comments[i].replies.filter((item) => item._id.toString() !== req.params.replyId.toString());
+             
+            } else  {
+            
+              return next(new ErrorHandler("you only can delete you're on comment ", 403));
+            }
+        }
+
+      }
+    }
+  }
+
+  await post.save();
+
+  return res.status(200).json({
+    success: true,
+    message: "comment deleted successfully",
+  });
+
+});
+
+exports.replyToaReply = catchAsyncErrors(async (req, res, next) => {
+
+
+  const post = await Post.findById(req.params.postId);
+
+  if (!post) {
+    return next(new ErrorHandler("can't find post ", 404));
+  }
+
+
+  const currentLoggedInUser = await User.findById(req.user.id);
+  let userWhoCommented;
+
+  for (let i = 0; i < post.comments.length; i++) {
+    if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
+
+      for (let j = 0; j < post.comments[i].replies.length; j++) {
+
+        if (req.params.replyId.toString() === post.comments[i].replies[j]._id.toString()) {
+
+          userWhoCommented = await User.findById(post.comments[i].replies[j].commentBy);
+          post.comments[i].replies.push({
+            commentBy: currentLoggedInUser._id,
+            repliedTo: userWhoCommented._id,
+            comment: req.body.comment
+          })
+
+        }
+
+      }
+
+    }
+  }
+
+  await post.save();
+
+  if (currentLoggedInUser._id.toString() !== userWhoCommented._id.toString()) {
+    const notification = await Notification.create({
+      user: {
+        avatar: currentLoggedInUser.avatar.url,
+        _id: currentLoggedInUser._id,
+        userName: currentLoggedInUser.userName
+      },
+      notificationMessage: "mentioned you in a comment"
+    });
+
+    userWhoCommented.notifications.push(notification._id);
+
+    await userWhoCommented.save();
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Comment added",
+  });
+
 });
 
 
 exports.getSinglePost = catchAsyncErrors(async (req, res, next) => {
 
-  const {postId}=req.params;
+  const { postId } = req.params;
 
- 
-  const post = await Post.findById(postId).populate("owner likes comments.user");
+
+  const post = await Post.findById(postId).populate("owner likes comments.user comments.likes comments.replies.commentBy comments.replies.repliedTo comments.replies.likes")
 
   res.status(200).json({
     success: true,

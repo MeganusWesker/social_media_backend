@@ -6,10 +6,17 @@ const { createPost,
     getPostOfFollowings,
     updateCaption,
     commentOnPost,
-    deleteComment,
     createVideoPost,
     saveOrUnsavePost,
-    getSinglePost } = require('../controllers/postController');
+    getSinglePost,
+    likeCommentOnPost,
+    updateCommentOnPost,
+    deleteCommentOnPost,
+    replyToComment,
+    likeReply,
+    editReplyOnPost,
+    deleteReplyOnPost,
+    replyToaReply } = require('../controllers/postController');
 const { isAuthenticatedUser } = require('../middlewares/userAuth');
 
 const singleUpload = require('../middlewares/singleUpload');
@@ -25,7 +32,12 @@ router.route('/posts').get(isAuthenticatedUser, getPostOfFollowings);
 
 router.route('/get/post/:postId').get(isAuthenticatedUser, getSinglePost);
 
-router.route('/post/comment/:id').put(isAuthenticatedUser, commentOnPost).delete(isAuthenticatedUser, deleteComment);
+router.route('/post/comment/:postId').post(isAuthenticatedUser, commentOnPost)
+
+router.route('/post/comment/:postId/:commentId').get(isAuthenticatedUser, likeCommentOnPost).put(isAuthenticatedUser, updateCommentOnPost).delete(isAuthenticatedUser, deleteCommentOnPost).post(isAuthenticatedUser, replyToComment);
+
+router.route('/post/comment/:postId/:commentId/:replyId').get(isAuthenticatedUser, likeReply).put(isAuthenticatedUser,editReplyOnPost).delete(isAuthenticatedUser,deleteReplyOnPost).post(isAuthenticatedUser,replyToaReply);
+
 
 router.route('/post/save/:id').get(isAuthenticatedUser, saveOrUnsavePost);
 

@@ -1,5 +1,4 @@
 const User = require('../models/userModel');
-const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const sendToken = require('../utils/jwtToken');
 const ErrorHandler = require("../utils/errorHandler");
@@ -100,13 +99,13 @@ exports.verify = catchAsyncErrors(async (req, res, next) => {
     }
 
   
-    if (otp !== user.otp || user.otp_expiry < Date.now()) {
+    if (otp !== user.otp || user.otp_expire < Date.now()) {
         return next(new ErrorHandler("invalid otp or expired otp", 400));
     }
 
     user.verified = true;
-    user.otp = null;
-    user.otp_expiry = null;
+    user.otp = undefined;
+    user.otp_expire = undefined;
 
     await user.save();
 
@@ -301,10 +300,14 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
     const { otp } = req.body;
 
+    console.log(otp);
+
     const user = await User.findOne({
         otp,
         otp_expire: { $gt: Date.now() }
     });
+
+
 
     if (!user) {
         return next(new ErrorHandler("reset password otp is invalid or has been expired", 404));

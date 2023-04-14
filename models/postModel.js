@@ -42,7 +42,49 @@ const postSchema = new mongoose.Schema({
             comment: {
                 type: String,
                 required: true,
-            }
+            },
+
+            likes: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User"
+                }  
+            ],
+
+            createdAt: {
+                type: Date,
+                default: Date.now
+            },
+
+            replies:[
+                {
+                    commentBy: {
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: "User"
+                    },
+
+                    repliedTo: {
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: "User"
+                    },
+        
+                    comment: {
+                        type: String,
+                    },
+
+                    likes: [
+                        {
+                            type: mongoose.Schema.Types.ObjectId,
+                            ref: "User"
+                        }  
+                    ],
+
+                    createdAt: {
+                        type: Date,
+                        default: Date.now
+                    },
+                }
+            ]
         }
     ],
 
