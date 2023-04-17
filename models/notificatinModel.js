@@ -24,6 +24,17 @@ const notificationSchema = new mongoose.Schema({
         default: true,
     },
 
+    isPostNotification: {
+        type: Boolean,
+        default: false,
+    },
+
+    postId: {
+
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+
+    },
 
     createdAt: {
         type: Date,

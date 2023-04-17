@@ -280,7 +280,9 @@ exports.commentOnPost = catchAsyncErrors(async (req, res, next) => {
         _id: currentLoggedInUser._id,
         userName: currentLoggedInUser.userName
       },
-      notificationMessage: "commented On you're Post"
+      notificationMessage: `commented On you're Post ${req.body.comment}`,
+      isPostNotification:true,
+      postId:post._id,
     });
 
     userThatOwnThePost.notifications.push(notification._id);
@@ -305,15 +307,19 @@ exports.likeCommentOnPost = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("can't find post ", 404));
   }
 
-  const userThatOwnThePost = await User.findById(post.owner);
+
   const currentLoggedInUser = await User.findById(req.user.id);
 
   let likeOrUnlikeChecker = true;
+  let commentMessage;
+  let userWhoCommented;
 
 
   for (let i = 0; i < post.comments.length; i++) {
     if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
       const alreadyLIked = post.comments[i].likes.includes(currentLoggedInUser._id);
+      commentMessage=post.comments[i].comment;
+      userWhoCommented = await User.findById(post.comments[i].user);
 
       if (!alreadyLIked) {
         post.comments[i].likes.push(currentLoggedInUser._id);
@@ -329,19 +335,21 @@ exports.likeCommentOnPost = catchAsyncErrors(async (req, res, next) => {
 
 
   if (likeOrUnlikeChecker) {
-    if (currentLoggedInUser._id.toString() !== userThatOwnThePost._id.toString()) {
+    if (currentLoggedInUser._id.toString() !== userWhoCommented._id.toString()) {
       const notification = await Notification.create({
         user: {
           avatar: currentLoggedInUser.avatar.url,
           _id: currentLoggedInUser._id,
           userName: currentLoggedInUser.userName
         },
-        notificationMessage: "liked you're comment"
+        notificationMessage: `liked you're comment ${commentMessage}`,
+        isPostNotification:true,
+        postId:post._id,
       });
 
-      userThatOwnThePost.notifications.push(notification._id);
+      userWhoCommented.notifications.push(notification._id);
 
-      await userThatOwnThePost.save();
+      await userWhoCommented.save();
     }
   }
 
@@ -400,15 +408,17 @@ exports.deleteCommentOnPost = catchAsyncErrors(async (req, res, next) => {
 
   const isPostOwner = userThatOwnThePost._id.toString() === currentLoggedInUser._id.toString();
 
+  
+
   for (let i = 0; i < post.comments.length; i++) {
     if (req.params.commentId.toString() === post.comments[i]._id.toString()) {
 
       
-      if (currentLoggedInUser._id.toString() !== post.comments[i].user.toString() || isPostOwner) {
-
-        return next(new ErrorHandler("you only can delete you're on comment ", 403));
-      } else {
+      if (currentLoggedInUser._id.toString() === post.comments[i].user.toString() || isPostOwner) {
         post.comments = post.comments.filter((item) => item._id.toString() !== req.params.commentId.toString());
+
+      } else {
+        return next(new ErrorHandler("you only can delete you're on comment ", 403));
       }
 
     }
@@ -457,7 +467,9 @@ exports.replyToComment = catchAsyncErrors(async (req, res, next) => {
         _id: currentLoggedInUser._id,
         userName: currentLoggedInUser.userName
       },
-      notificationMessage: "mentioned you in a comment"
+      notificationMessage: `mentioned you in a comment ${req.body.comment}`,
+      isPostNotification:true,
+      postId:post._id,
     });
 
     userWhoCommented.notifications.push(notification._id);
@@ -488,6 +500,7 @@ exports.likeReply = catchAsyncErrors(async (req, res, next) => {
   let userWhoCommented;
 
   let likeOrUnlikeChecker = true;
+  let commentMessage;
 
 
   for (let i = 0; i < post.comments.length; i++) {
@@ -495,6 +508,8 @@ exports.likeReply = catchAsyncErrors(async (req, res, next) => {
 
       for (let j = 0; j < post.comments[i].replies.length; j++) {
         if (req.params.replyId.toString() === post.comments[i].replies[j]._id.toString()) {
+
+          commentMessage=post.comments[i].replies[j].comment;
 
           userWhoCommented = await User.findById(post.comments[i].replies[j].commentBy);
 
@@ -523,7 +538,9 @@ exports.likeReply = catchAsyncErrors(async (req, res, next) => {
           _id: currentLoggedInUser._id,
           userName: currentLoggedInUser.userName
         },
-        notificationMessage: "liked you're comment"
+        notificationMessage: `liked you're comment ${commentMessage}`,
+        isPostNotification:true,
+        postId:post._id,
       });
 
       userWhoCommented.notifications.push(notification._id);
@@ -665,7 +682,9 @@ exports.replyToaReply = catchAsyncErrors(async (req, res, next) => {
         _id: currentLoggedInUser._id,
         userName: currentLoggedInUser.userName
       },
-      notificationMessage: "mentioned you in a comment"
+      notificationMessage: `mentioned you in a comment ${req.body.comment}`,
+      isPostNotification:true,
+      postId:post._id,
     });
 
     userWhoCommented.notifications.push(notification._id);
