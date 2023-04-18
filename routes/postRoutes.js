@@ -16,7 +16,8 @@ const { createPost,
     likeReply,
     editReplyOnPost,
     deleteReplyOnPost,
-    replyToaReply } = require('../controllers/postController');
+    replyToaReply,
+    toggleNotifications } = require('../controllers/postController');
 const { isAuthenticatedUser } = require('../middlewares/userAuth');
 
 const singleUpload = require('../middlewares/singleUpload');
@@ -40,5 +41,7 @@ router.route('/post/comment/:postId/:commentId/:replyId').get(isAuthenticatedUse
 
 
 router.route('/post/save/:id').get(isAuthenticatedUser, saveOrUnsavePost);
+
+router.route('/notifications').get(isAuthenticatedUser, toggleNotifications);
 
 module.exports = router;

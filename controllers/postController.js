@@ -720,3 +720,21 @@ exports.getSinglePost = catchAsyncErrors(async (req, res, next) => {
     post,
   });
 });
+
+exports.toggleNotifications = catchAsyncErrors(async (req, res, next) => { 
+
+  const currentLoggedInUser = await User.findById(req.user.id);
+
+  currentLoggedInUser.notifications.forEach(async(item)=>{
+    const notification=await Notification.findById(item);
+    notification.isNewMessage=false;
+    await notification.save();
+  });
+
+  await currentLoggedInUser.save()
+
+  res.status(200).json({
+    success: true,
+  });
+  
+})
