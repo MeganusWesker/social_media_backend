@@ -356,6 +356,7 @@ exports.likeCommentOnPost = catchAsyncErrors(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: likeOrUnlikeChecker ? "comment liked successfully" : "comment unlike successfully",
+    likedComment:likeOrUnlikeChecker
   });
 
 });
@@ -552,6 +553,7 @@ exports.likeReply = catchAsyncErrors(async (req, res, next) => {
   return res.status(200).json({
     success: true,
     message: likeOrUnlikeChecker ? "comment liked successfully" : "comment unlike successfully",
+    likedReply:likeOrUnlikeChecker,
   });
 
 });
