@@ -10,6 +10,12 @@ exports.createConversation=catchAsyncErrors(async(req,res,next)=>{
 
     const {members} =req.body;
 
+    const conversation =await Conversation.find({members});
+
+    if(conversation){
+        return next(new ErrorHandler("converSation is already been created", 403));
+    }
+
     await Conversation.create({members});
 
     res.status(201).json({
