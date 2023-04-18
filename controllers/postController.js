@@ -148,18 +148,22 @@ exports.likeAndUnlikePost = catchAsyncErrors(async (req, res, next) => {
   else {
     post.likes.push(req.user.id);
 
-    const notification = await Notification.create({
-      user: {
-        avatar: currentUser.avatar.url,
-        _id: currentUser._id,
-        userName: currentUser.userName
-      },
-      isPostNotification:true,
-      postId:post._id,
-      notificationMessage: "liked you're post "
-    });
+    if(user._id !==currentUser._id){
+      const notification = await Notification.create({
+        user: {
+          avatar: currentUser.avatar.url,
+          _id: currentUser._id,
+          userName: currentUser.userName
+        },
+        isPostNotification:true,
+        postId:post._id,
+        notificationMessage: "liked you're post "
+      });
+  
+      user.notifications.push(notification._id);
+    }
 
-    user.notifications.push(notification._id);
+
 
     await post.save();
     await user.save();
