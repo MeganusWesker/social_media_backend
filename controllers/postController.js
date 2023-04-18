@@ -154,6 +154,8 @@ exports.likeAndUnlikePost = catchAsyncErrors(async (req, res, next) => {
         _id: currentUser._id,
         userName: currentUser.userName
       },
+      isPostNotification:true,
+      postId:post._id,
       notificationMessage: "liked you're post "
     });
 
